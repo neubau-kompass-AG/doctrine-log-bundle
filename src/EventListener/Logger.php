@@ -5,7 +5,6 @@ namespace Mb\DoctrineLogBundle\EventListener;
 use Doctrine\Common\Persistence\Event\LifecycleEventArgs;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\PostFlushEventArgs;
-use JMS\Serializer\SerializerInterface as Serializer;
 
 use Mb\DoctrineLogBundle\Service\AnnotationReader;
 use Mb\DoctrineLogBundle\Service\Logger as LoggerService;
@@ -38,11 +37,6 @@ class Logger
     private $loggerService;
 
     /**
-     * @var Serializer
-     */
-    private $serializer;
-
-    /**
      * @var AnnotationReader
      */
     private $reader;
@@ -61,21 +55,18 @@ class Logger
      * Logger constructor.
      * @param EntityManagerInterface $em
      * @param LoggerService          $loggerService
-     * @param Serializer             $serializer
      * @param AnnotationReader       $reader
      * @param array                  $ignoreProperties
      */
     public function __construct(
         EntityManagerInterface $em,
         LoggerService $loggerService,
-        Serializer $serializer,
         AnnotationReader $reader,
         LoggerInterface $monolog,
         array $ignoreProperties
     ) {
         $this->em = $em;
         $this->loggerService = $loggerService;
-        $this->serializer = $serializer;
         $this->reader = $reader;
         $this->ignoreProperties = $ignoreProperties;
         $this->monolog = $monolog;
@@ -173,18 +164,13 @@ class Logger
                         }
                     }
 
-                    if (!empty($changeSet)) {
-                        $changes = $this->serializer->serialize($changeSet, 'json');
-                    }
                 }
 
-                if ($action === LogEntity::ACTION_UPDATE && !$changes) {
-                    // Log nothing
-                } else {
+                if ($action !== LogEntity::ACTION_UPDATE || $changeSet) {
                     $this->logs[] = $this->loggerService->log(
                         $entity,
                         $action,
-                        $changes
+                        $changeSet
                     );
                 }
             }

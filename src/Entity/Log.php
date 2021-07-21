@@ -65,9 +65,9 @@ class Log
     protected $action;
 
     /**
-     * @var string $changes
+     * @var array $changes
      *
-     * @ORM\Column(name="changes", type="text", nullable=true)
+     * @ORM\Column(name="changes", type="json", nullable=true)
      */
     protected $changes;
 
@@ -184,7 +184,7 @@ class Log
     /**
      * Set changes
      *
-     * @param string $changes
+     * @param array $changes
      * @return Log
      */
     public function setChanges($changes): Log
@@ -197,18 +197,18 @@ class Log
     /**
      * Returns the sonata format
      *
-     * @return array
+     * @return string
      */
     public function getChangesSonata()
     {
-        return json_encode(json_decode($this->changes), JSON_PRETTY_PRINT);
+        return json_encode($this->changes, JSON_PRETTY_PRINT);
     }
-    
+
     /**
-     * @return mixed
+     * @return array
      */
     public function getChangesArray()
     {
-        return json_decode($this->changes, true);
+        return $this->changes;
     }
 }
