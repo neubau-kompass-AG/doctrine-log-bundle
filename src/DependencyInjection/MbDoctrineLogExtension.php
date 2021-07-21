@@ -1,11 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Mb\DoctrineLogBundle\DependencyInjection;
 
+use Doctrine\Common\EventSubscriber;
+use Mb\DoctrineLogBundle\EventSubscriber\Logger;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
-use Symfony\Component\HttpKernel\DependencyInjection\Extension;
+use Symfony\Component\DependencyInjection\Extension\Extension;
+use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 
 /**
  * Class MbDoctrineLogExtension
@@ -16,15 +20,15 @@ class MbDoctrineLogExtension extends Extension
     /**
      * @inheritDoc
      */
-    public function load(array $configs, ContainerBuilder $container)
+    public function load(array $configs, ContainerBuilder $containerBuilder)
     {
-        $loader = new XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
+        $loader = new XmlFileLoader($containerBuilder, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.xml');
 
-        $configuration = $this->getConfiguration($configs, $container);
+        $configuration = $this->getConfiguration($configs, $containerBuilder);
         $config = $this->processConfiguration($configuration, $configs);
 
-        $definition = $container->getDefinition('mb_doctrine_log.event_listener.logger');
+        $definition = $containerBuilder->getDefinition('mb_doctrine_log.event_subscriber.logger');
         $definition->setArgument(5, $config['ignore_properties']);
     }
 }

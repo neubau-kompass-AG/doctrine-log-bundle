@@ -5,11 +5,8 @@
         https://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <services>
-        <service class="Mb\DoctrineLogBundle\EventListener\Logger" id="mb_doctrine_log.event_listener.logger">
-            <tag name="doctrine.event_listener" event="postPersist" priority="1"/>
-            <tag name="doctrine.event_listener" event="postUpdate" priority="1"/>
-            <tag name="doctrine.event_listener" event="postFlush" priority="1"/>
-            <tag name="doctrine.event_listener" event="preRemove" priority="1"/>
+        <service class="Mb\DoctrineLogBundle\EventSubscriber\Logger" id="mb_doctrine_log.event_subscriber.logger">
+            <tag name="doctrine.event_subscriber" />
             <argument type="service" id="doctrine.orm.default_entity_manager"/>
             <argument type="service" id="mb_doctrine_log.service.logger"/>
             <argument type="service" id="mb_doctrine_log.service.annotation_reader"/>

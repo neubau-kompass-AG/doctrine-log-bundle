@@ -1,10 +1,12 @@
 <?php
 
-namespace Mb\DoctrineLogBundle\EventListener;
+namespace Mb\DoctrineLogBundle\EventSubscriber;
 
-use Doctrine\Common\Persistence\Event\LifecycleEventArgs;
+use Doctrine\Common\EventSubscriber;
+use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\PostFlushEventArgs;
+use Doctrine\ORM\Events;
 
 use Mb\DoctrineLogBundle\Service\AnnotationReader;
 use Mb\DoctrineLogBundle\Service\Logger as LoggerService;
@@ -19,7 +21,7 @@ use Psr\Log\LoggerInterface;
  *
  * @SuppressWarnings(PHPMD.UnusedFormalParameter.Unused)
  */
-class Logger
+final class Logger implements EventSubscriber
 {
     /**
      * @var array
@@ -177,5 +179,19 @@ class Logger
         } catch (\Exception $e) {
             $this->monolog->error($e->getMessage());
         }
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getSubscribedEvents(): array
+    {
+        return [
+            Events::postPersist,
+            Events::preUpdate,
+            Events::preRemove,
+            Events::onFlush,
+            Events::postFlush
+        ];
     }
 }
