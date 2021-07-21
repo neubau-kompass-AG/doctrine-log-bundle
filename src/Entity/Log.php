@@ -2,9 +2,9 @@
 
 namespace Mb\DoctrineLogBundle\Entity;
 
+use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Blameable\Traits\BlameableEntity;
-use Gedmo\Timestampable\Traits\TimestampableEntity;
 
 /**
  * Class Log
@@ -16,8 +16,7 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
  */
 class Log
 {
-    use BlameableEntity,
-        TimestampableEntity;
+    use BlameableEntity;
 
     /**
      * Action create
@@ -51,9 +50,9 @@ class Log
     protected $objectClass;
 
     /**
-     * @var int $foreignKey
+     * @var string $foreignKey
      *
-     * @ORM\Column(name="foreign_key", type="integer")
+     * @ORM\Column(name="foreign_key", type="string", length=1024)
      */
     protected $foreignKey;
 
@@ -72,11 +71,18 @@ class Log
     protected $changes;
 
     /**
+     * @var \DateTime
+     *
+     * @ORM\Column(type="datetime_immutable", nullable=false)
+     */
+    protected $createdAt;
+
+    /**
      * Log constructor.
      */
     public function __construct()
     {
-        $this->created = new \DateTime();
+        $this->createdAt = new \DateTimeImmutable();
     }
 
     /**
@@ -174,7 +180,7 @@ class Log
     /**
      * Get changes
      *
-     * @return string
+     * @return array
      */
     public function getChanges()
     {
@@ -195,20 +201,28 @@ class Log
     }
 
     /**
-     * Returns the sonata format
-     *
-     * @return string
+     * @return \DateTime
      */
-    public function getChangesSonata()
+    public function getCreatedAt(): \DateTime
     {
-        return json_encode($this->changes, JSON_PRETTY_PRINT);
+        return $this->createdAt;
     }
 
     /**
+     * Returns the sonata format
+     *
      * @return array
+     */
+    public function getChangesSonata()
+    {
+        return json_encode(json_decode($this->changes), JSON_PRETTY_PRINT);
+    }
+    
+    /**
+     * @return mixed
      */
     public function getChangesArray()
     {
-        return $this->changes;
+        return json_decode($this->changes, true);
     }
 }
