@@ -9,7 +9,7 @@ use Mb\DoctrineLogBundle\EventSubscriber\Logger;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
-use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
+use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 
 /**
  * Class MbDoctrineLogExtension
@@ -29,6 +29,6 @@ class MbDoctrineLogExtension extends Extension
         $config = $this->processConfiguration($configuration, $configs);
 
         $definition = $containerBuilder->getDefinition('mb_doctrine_log.event_subscriber.logger');
-        $definition->setArgument(5, $config['ignore_properties']);
+        $definition->setArgument(4, $config['ignore_properties']);
     }
 }

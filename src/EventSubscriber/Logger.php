@@ -188,9 +188,8 @@ final class Logger implements EventSubscriber
     {
         return [
             Events::postPersist,
-            Events::preUpdate,
+            Events::postUpdate,
             Events::preRemove,
-            Events::onFlush,
             Events::postFlush
         ];
     }
