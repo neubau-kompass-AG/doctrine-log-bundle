@@ -10,6 +10,7 @@ use Doctrine\Common\Annotations\Reader;
 
 /**
  * Class AnnotationReader
+ *
  * @package Mb\DoctrineLogBundle\Service
  */
 class AnnotationReader
@@ -31,6 +32,7 @@ class AnnotationReader
 
     /**
      * AnnotationReader constructor.
+     *
      * @param Reader $reader
      */
     public function __construct(Reader $reader)
@@ -87,5 +89,26 @@ class AnnotationReader
         $annotation = $this->reader->getPropertyAnnotation($property, Exclude::class);
 
         return !$annotation instanceof Exclude;
+    }
+
+    /**
+     * @param $property
+     * @return ?string
+     * @throws \ReflectionException
+     */
+    public function getPropertyExpression($property)
+    {
+        $property = new \ReflectionProperty(
+            str_replace('Proxies\__CG__\\', '', get_class($this->entity)),
+            $property
+        );
+
+        $annotation = $this->reader->getPropertyAnnotation($property, Log::class);
+
+        if ($annotation instanceof Log) {
+            return $annotation->expression;
+        }
+
+        return null;
     }
 }

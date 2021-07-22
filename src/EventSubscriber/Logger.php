@@ -6,6 +6,7 @@ use Doctrine\Common\EventSubscriber;
 use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\PostFlushEventArgs;
+use Doctrine\ORM\Event\OnFlushEventArgs;
 use Doctrine\ORM\Events;
 
 use Mb\DoctrineLogBundle\Service\AnnotationReader;
@@ -14,9 +15,13 @@ use Mb\DoctrineLogBundle\Entity\Log as LogEntity;
 use Mb\DoctrineLogBundle\Annotation\Loggable;
 use Psr\Http\Message\StreamInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\ExpressionLanguage\Expression;
+use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
+use Throwable;
 
 /**
  * Class Logger
+ *
  * @package CoreBundle\EventListener
  *
  * @SuppressWarnings(PHPMD.UnusedFormalParameter.Unused)
@@ -49,15 +54,22 @@ final class Logger implements EventSubscriber
     private $monolog;
 
     /**
+     * @var ExpressionLanguage
+     */
+    private $expressionLanguage;
+
+    /**
      * @var array
      */
     private $ignoreProperties;
 
     /**
      * Logger constructor.
+     *
      * @param EntityManagerInterface $em
      * @param LoggerService          $loggerService
      * @param AnnotationReader       $reader
+     * @param LoggerInterface        $monolog
      * @param array                  $ignoreProperties
      */
     public function __construct(
@@ -66,12 +78,15 @@ final class Logger implements EventSubscriber
         AnnotationReader $reader,
         LoggerInterface $monolog,
         array $ignoreProperties
-    ) {
+    )
+    {
         $this->em = $em;
         $this->loggerService = $loggerService;
         $this->reader = $reader;
-        $this->ignoreProperties = $ignoreProperties;
         $this->monolog = $monolog;
+        $this->expressionLanguage = new ExpressionLanguage();
+
+        $this->ignoreProperties = $ignoreProperties;
     }
 
     /**
@@ -106,7 +121,60 @@ final class Logger implements EventSubscriber
     {
         $entity = $args->getObject();
         $this->log($entity, LogEntity::ACTION_REMOVE);
+    }
 
+    /**
+     * Get changed in many-to-many and many-to-one collections
+     *
+     * @param OnFlushEventArgs $args
+     */
+    public function onFlush(OnFlushEventArgs $args)
+    {
+        foreach ($args->getEntityManager()->getUnitOfWork()->getScheduledCollectionUpdates() as $collectionUpdate) {
+            /** @var PersistentCollection $collectionUpdate */
+            $owner = $collectionUpdate->getOwner();
+            $this->reader->init($owner);
+
+            $mapping = $collectionUpdate->getMapping();
+            if (!$this->reader->isLoggable($mapping['fieldName'])) {
+                return;
+            }
+
+
+            $expression = $this->reader->getPropertyExpression($mapping['fieldName']);
+
+            $insertions = [];
+            foreach ($collectionUpdate->getInsertDiff() as $relatedObject) {
+                $insertions[] = $this->expressionLanguage->evaluate($expression, ['obj' => $relatedObject]);
+            }
+
+            $deletions = [];
+            foreach ($collectionUpdate->getDeleteDiff() as $relatedObject) {
+                $deletions[] = $this->expressionLanguage->evaluate($expression, ['obj' => $relatedObject]);
+            }
+
+            $changes = [];
+
+            if (count($insertions)) {
+                $changes['insertions'] = $insertions;
+            }
+            if (count($deletions)) {
+                $changes['deletions'] = $deletions;
+            }
+
+            if ($changes != []) {
+                foreach ($collectionUpdate as $item) {
+                    $changes['newSet'][] = $this->expressionLanguage->evaluate($expression, ['obj' => $item]);
+                }
+
+                if (isset($this->logs[spl_object_hash($item)])) {
+                    $changes = array_merge($this->logs[spl_object_hash($item)]->getChanges(), [$mapping['fieldName'] => $changes]);
+                } else {
+                    $changes = [$mapping['fieldName'] => $changes];
+                }
+                $this->logs[spl_object_hash($owner)] = $this->loggerService->log($owner, LogEntity::ACTION_UPDATE, $changes);
+            }
+        }
     }
 
     /**
@@ -137,7 +205,8 @@ final class Logger implements EventSubscriber
         try {
             $this->reader->init($entity);
             if ($this->reader->isLoggable()) {
-                $changes = null;
+                $changeSet = null;
+
                 if ($action === LogEntity::ACTION_UPDATE) {
                     $uow = $this->em->getUnitOfWork();
 
@@ -148,6 +217,7 @@ final class Logger implements EventSubscriber
                         return;
                     }
 
+
                     // just getting the changed objects ids
                     foreach ($changeSet as $key => &$values) {
                         if (in_array($key, $this->ignoreProperties) || !$this->reader->isLoggable($key)) {
@@ -155,25 +225,48 @@ final class Logger implements EventSubscriber
                             unset($changeSet[$key]);
                         }
 
-                        if (is_object($values[0]) && method_exists($values[0], 'getId')) {
-                            $values[0] = $values[0]->getId();
-                        }
+                        $expression = $this->reader->getPropertyExpression($key);
 
-                        if (is_object($values[1]) && method_exists($values[1], 'getId')) {
-                            $values[1] = $values[1]->getId();
-                        } elseif ($values[1] instanceof StreamInterface) {
-                            $values[1] = (string) $values[1];
+                        if ($expression != null) {
+                            if (is_object($values[0])) {
+                                $values[0] = $this->expressionLanguage->evaluate($expression, ['obj' => $values[0]]);
+                            }
+                            if (is_object($values[1])) {
+                                $values[1] = $this->expressionLanguage->evaluate($expression, ['obj' => $values[1]]);
+                            }
+                        } else {
+                            if ($values[0] instanceof \DateTime) {
+                                $values[0] = $values[0]->format('Y-m-d H:i:s');
+                            }
+                            if ($values[1] instanceof \DateTime) {
+                                $values[1] = $values[1]->format('Y-m-d H:i:s');
+                            }
+
+                            if (is_object($values[0]) && method_exists($values[0], 'getId')) {
+                                $values[0] = $values[0]->getId();
+                            } elseif ($values[0] instanceof StreamInterface) {
+                                $values[0] = (string)$values[1];
+                            }
+
+                            if (is_object($values[1]) && method_exists($values[1], 'getId')) {
+                                $values[1] = $values[1]->getId();
+                            } elseif ($values[1] instanceof StreamInterface) {
+                                $values[1] = (string)$values[1];
+                            }
                         }
                     }
-
                 }
 
-                if ($action !== LogEntity::ACTION_UPDATE || $changeSet) {
-                    $this->logs[] = $this->loggerService->log(
+                if ($action !== LogEntity::ACTION_UPDATE || !empty($changeSet)) {
+                    if (isset($this->logs[spl_object_hash(($entity))])) {
+                        $changeSet = array_merge($changeSet, $this->logs[spl_object_hash($entity)]->getChanges());
+                    }
+                    $this->logs[spl_object_hash($entity)] = $this->loggerService->log(
                         $entity,
                         $action,
                         $changeSet
                     );
+
                 }
             }
         } catch (\Exception $e) {
@@ -190,6 +283,7 @@ final class Logger implements EventSubscriber
             Events::postPersist,
             Events::postUpdate,
             Events::preRemove,
+            Events::onFlush,
             Events::postFlush
         ];
     }
