@@ -4,7 +4,6 @@ namespace Mb\DoctrineLogBundle\Entity;
 
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
-use Gedmo\Blameable\Traits\BlameableEntity;
 
 /**
  * Class Log
@@ -16,8 +15,6 @@ use Gedmo\Blameable\Traits\BlameableEntity;
  */
 class Log
 {
-    use BlameableEntity;
-
     /**
      * Action create
      */
@@ -78,12 +75,20 @@ class Log
     protected $createdAt;
 
     /**
+     * @var string
+     *
+     * @ORM\Column(type="string", length=255)
+     */
+    protected $changedBy;
+
+    /**
      * Log constructor.
      */
     public function __construct(
         string $objectClass,
         string $foreignKey,
         string $action,
+        ?string $changedBy,
         ?array $changes
     ) {
         $this->objectClass = $objectClass;
@@ -91,6 +96,7 @@ class Log
         $this->action = $action;
         $this->changes = $changes;
 
+        $this->changedBy = $changedBy;
         $this->createdAt = new DateTimeImmutable();
     }
 
