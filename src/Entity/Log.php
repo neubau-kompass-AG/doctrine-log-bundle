@@ -80,9 +80,18 @@ class Log
     /**
      * Log constructor.
      */
-    public function __construct()
-    {
-        $this->createdAt = new \DateTimeImmutable();
+    public function __construct(
+        string $objectClass,
+        string $foreignKey,
+        string $action,
+        ?array $changes
+    ) {
+        $this->objectClass = $objectClass;
+        $this->foreignKey = $foreignKey;
+        $this->action = $action;
+        $this->changes = $changes;
+
+        $this->createdAt = new DateTimeImmutable();
     }
 
     /**
@@ -96,20 +105,6 @@ class Log
     }
 
     /**
-     * Set objectClass
-     *
-     * @param string $objectClass
-     *
-     * @return $this
-     */
-    public function setObjectClass($objectClass) : Log
-    {
-        $this->objectClass = $objectClass;
-
-        return $this;
-    }
-
-    /**
      * Get objectClass
      *
      * @return string
@@ -120,41 +115,13 @@ class Log
     }
 
     /**
-     * Set foreignKey
-     *
-     * @param integer $foreignKey
-     *
-     * @return $this
-     */
-    public function setForeignKey($foreignKey) : Log
-    {
-        $this->foreignKey = $foreignKey;
-
-        return $this;
-    }
-
-    /**
      * Get foreignKey
      *
-     * @return int
+     * @return string
      */
-    public function getForeignKey() : int
+    public function getForeignKey() : string
     {
         return $this->foreignKey;
-    }
-
-    /**
-     * Set action
-     *
-     * @param string $action
-     *
-     * @return $this
-     */
-    public function setAction($action) : Log
-    {
-        $this->action = $action;
-
-        return $this;
     }
 
     /**
@@ -168,16 +135,6 @@ class Log
     }
 
     /**
-     * Returns the pretty class name
-     *
-     * @return string
-     */
-    public function getPrettyClass() : string
-    {
-        return substr($this->objectClass, 18, strlen($this->objectClass));
-    }
-
-    /**
      * Get changes
      *
      * @return array
@@ -188,41 +145,10 @@ class Log
     }
 
     /**
-     * Set changes
-     *
-     * @param array $changes
-     * @return Log
-     */
-    public function setChanges($changes): Log
-    {
-        $this->changes = $changes;
-
-        return $this;
-    }
-
-    /**
      * @return \DateTime
      */
     public function getCreatedAt(): \DateTime
     {
         return $this->createdAt;
-    }
-
-    /**
-     * Returns the sonata format
-     *
-     * @return array
-     */
-    public function getChangesSonata()
-    {
-        return json_encode(json_decode($this->changes), JSON_PRETTY_PRINT);
-    }
-    
-    /**
-     * @return mixed
-     */
-    public function getChangesArray()
-    {
-        return json_decode($this->changes, true);
     }
 }

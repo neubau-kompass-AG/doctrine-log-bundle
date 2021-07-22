@@ -40,15 +40,12 @@ class Logger
         $class = $this->em->getClassMetadata(get_class($object));
         $identifier = $class->getIdentifierValues($object);
 
-        $log = new LogEntity();
-        $log
-            ->setObjectClass(str_replace('Proxies\__CG__\\', '', get_class($object)))
-            ->setForeignKey(implode(", ", $identifier))
-            ->setAction($action)
-            ->setChanges($changes)
-        ;
-
-        return $log;
+        return new LogEntity(
+            $class->getName(),
+            implode(", ", $identifier),
+            $action,
+            $changes
+        );
     }
 
     /**
