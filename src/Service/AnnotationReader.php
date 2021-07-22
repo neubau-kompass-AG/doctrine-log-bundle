@@ -63,6 +63,14 @@ class AnnotationReader
     {
         return !$property ? $this->classAnnotation instanceof Loggable : $this->isPropertyLoggable($property);
     }
+    
+    public function getOnDeleteLogExpression(): ?string {
+        if($this->classAnnotation instanceof Loggable) {
+            return $this->classAnnotation->onDeleteLog;
+        }
+
+        return null;
+    }
 
     /**
      * Check if propert is loggable

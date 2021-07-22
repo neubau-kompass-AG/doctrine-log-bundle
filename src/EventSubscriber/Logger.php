@@ -202,7 +202,7 @@ final class Logger implements EventSubscriber
      */
     private function log($entity, $action)
     {
-        try {
+       //try {
             $this->reader->init($entity);
             if ($this->reader->isLoggable()) {
                 $changeSet = null;
@@ -257,6 +257,14 @@ final class Logger implements EventSubscriber
                     }
                 }
 
+                if($action === LogEntity::ACTION_REMOVE) {
+                    $expression = $this->reader->getOnDeleteLogExpression();
+
+                    if(!empty($expression)) {
+                        $changeSet['_remove'] = $this->expressionLanguage->evaluate($expression, ['obj' => $entity]);
+                    }
+                }
+
                 if ($action !== LogEntity::ACTION_UPDATE || !empty($changeSet)) {
                     if (isset($this->logs[spl_object_hash(($entity))])) {
                         $changeSet = array_merge($changeSet, $this->logs[spl_object_hash($entity)]->getChanges());
@@ -269,9 +277,9 @@ final class Logger implements EventSubscriber
 
                 }
             }
-        } catch (\Exception $e) {
+        /*} catch (\Exception $e) {
             $this->monolog->error($e->getMessage());
-        }
+        }*/
     }
 
     /**
