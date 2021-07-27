@@ -47,7 +47,10 @@ class Logger
         $class = $this->em->getClassMetadata(get_class($object));
         $identifier = $class->getIdentifierValues($object);
 
-        $username = $this->security->getUser()->getUsername();
+        $username = null;
+        if($this->security->getUser()) {
+            $username = $this->security->getUser()->getUsername();
+        }
         return new LogEntity(
             $class->getName(),
             implode(", ", $identifier),
