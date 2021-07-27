@@ -202,7 +202,7 @@ final class Logger implements EventSubscriber
      */
     private function log($entity, $action)
     {
-       //try {
+       try {
             $this->reader->init($entity);
             if ($this->reader->isLoggable()) {
                 $changeSet = null;
@@ -277,9 +277,9 @@ final class Logger implements EventSubscriber
 
                 }
             }
-        /*} catch (\Exception $e) {
+        } catch (\Exception $e) {
             $this->monolog->error($e->getMessage());
-        }*/
+        }
     }
 
     /**

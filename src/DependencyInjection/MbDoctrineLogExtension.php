@@ -29,6 +29,6 @@ class MbDoctrineLogExtension extends Extension
         $config = $this->processConfiguration($configuration, $configs);
 
         $definition = $containerBuilder->getDefinition(Logger::class);
-        $definition->setArgument("ignoreProperties", $config['ignore_properties']);
+        $definition->setArgument('$ignoreProperties', $config['ignore_properties']);
     }
 }
