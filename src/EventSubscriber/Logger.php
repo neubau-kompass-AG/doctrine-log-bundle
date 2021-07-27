@@ -265,7 +265,11 @@ final class Logger implements EventSubscriber
                     }
                 }
 
-                if ($action !== LogEntity::ACTION_UPDATE || !empty($changeSet)) {
+                if(empty($changeSet)) {
+                    return;
+                }
+
+                if ($action !== LogEntity::ACTION_UPDATE) {
                     if (isset($this->logs[spl_object_hash(($entity))])) {
                         $changeSet = array_merge($changeSet, $this->logs[spl_object_hash($entity)]->getChanges());
                     }
