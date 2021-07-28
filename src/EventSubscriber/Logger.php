@@ -136,7 +136,7 @@ final class Logger implements EventSubscriber
             $this->reader->init($owner);
 
             $mapping = $collectionUpdate->getMapping();
-            if (!$this->reader->isLoggable($mapping['fieldName'])) {
+            if (!$this->reader->isLoggable() || !$this->reader->isLoggable($mapping['fieldName'])) {
                 return;
             }
 
