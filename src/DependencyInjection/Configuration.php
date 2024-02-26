@@ -5,15 +5,9 @@ namespace Mb\DoctrineLogBundle\DependencyInjection;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
-/**
- * Class Configuration
- * @package Mb\DoctrineLogBundle\DependencyInjection
- */
 class Configuration implements ConfigurationInterface
 {
-    /**
-     * @inheritDoc
-     */
+
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('mb_doctrine_log');

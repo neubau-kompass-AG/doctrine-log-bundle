@@ -11,15 +11,10 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 
-/**
- * Class MbDoctrineLogExtension
- * @package Mb\DoctrineLog\DependencyInjection
- */
 class MbDoctrineLogExtension extends Extension
 {
-    /**
-     * @inheritDoc
-     */
+
+    /** @inheritDoc */
     public function load(array $configs, ContainerBuilder $containerBuilder)
     {
         $loader = new XmlFileLoader($containerBuilder, new FileLocator(__DIR__.'/../Resources/config'));

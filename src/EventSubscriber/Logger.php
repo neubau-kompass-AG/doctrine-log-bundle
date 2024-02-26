@@ -2,17 +2,17 @@
 
 namespace Mb\DoctrineLogBundle\EventSubscriber;
 
+use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\Common\EventSubscriber;
 use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\PostFlushEventArgs;
 use Doctrine\ORM\Event\OnFlushEventArgs;
 use Doctrine\ORM\Events;
-
-use Mb\DoctrineLogBundle\Service\AnnotationReader;
+use Mb\DoctrineLogBundle\Service\AttributeReader;
 use Mb\DoctrineLogBundle\Service\Logger as LoggerService;
 use Mb\DoctrineLogBundle\Entity\Log as LogEntity;
-use Mb\DoctrineLogBundle\Annotation\Loggable;
+use Mb\DoctrineLogBundle\Attribute\Loggable;
 use Psr\Http\Message\StreamInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\ExpressionLanguage\Expression;
@@ -26,109 +26,48 @@ use Throwable;
  *
  * @SuppressWarnings(PHPMD.UnusedFormalParameter.Unused)
  */
+#[AsDoctrineListener(event: Events::postPersist)]
+#[AsDoctrineListener(event: Events::postUpdate)]
+#[AsDoctrineListener(event: Events::preRemove)]
+#[AsDoctrineListener(event: Events::onFlush)]
+#[AsDoctrineListener(event: Events::postFlush)]
 final class Logger implements EventSubscriber
 {
-    /**
-     * @var array
-     */
+    /** @var array<string, string> */
     protected $logs;
 
-    /**
-     * @var EntityManagerInterface
-     */
-    private $em;
+    protected ExpressionLanguage $expressionLanguage;
 
-    /**
-     * @var LoggerService
-     */
-    private $loggerService;
-
-    /**
-     * @var AnnotationReader
-     */
-    private $reader;
-
-    /**
-     * @var LoggerInterface
-     */
-    private $monolog;
-
-    /**
-     * @var ExpressionLanguage
-     */
-    private $expressionLanguage;
-
-    /**
-     * @var array
-     */
-    private $ignoreProperties;
-
-    /**
-     * Logger constructor.
-     *
-     * @param EntityManagerInterface $em
-     * @param LoggerService          $loggerService
-     * @param AnnotationReader       $reader
-     * @param LoggerInterface        $monolog
-     * @param array                  $ignoreProperties
-     */
     public function __construct(
-        EntityManagerInterface $em,
-        LoggerService $loggerService,
-        AnnotationReader $reader,
-        LoggerInterface $monolog,
-        array $ignoreProperties
+        protected EntityManagerInterface $entityManager,
+        protected LoggerService $loggerService,
+        protected LoggerInterface $monolog,
+        protected AttributeReader $reader,
+        protected array $ignoreProperties
     )
     {
-        $this->em = $em;
-        $this->loggerService = $loggerService;
-        $this->reader = $reader;
-        $this->monolog = $monolog;
         $this->expressionLanguage = new ExpressionLanguage();
-
-        $this->ignoreProperties = $ignoreProperties;
     }
 
-    /**
-     * Post persist listener
-     *
-     * @param LifecycleEventArgs $args
-     */
-    public function postPersist(LifecycleEventArgs $args)
+    public function postPersist(LifecycleEventArgs $args): void
     {
         $entity = $args->getObject();
         $this->log($entity, LogEntity::ACTION_CREATE);
     }
 
-    /**
-     * Post update listener
-     *
-     * @param LifecycleEventArgs $args
-     */
-    public function postUpdate(LifecycleEventArgs $args)
+    public function postUpdate(LifecycleEventArgs $args): void
     {
         $entity = $args->getObject();
         $this->log($entity, LogEntity::ACTION_UPDATE);
-
     }
 
-    /**
-     * Pre remove listener
-     *
-     * @param LifecycleEventArgs $args
-     */
-    public function preRemove(LifecycleEventArgs $args)
+    public function preRemove(LifecycleEventArgs $args): void
     {
         $entity = $args->getObject();
         $this->log($entity, LogEntity::ACTION_REMOVE);
     }
 
-    /**
-     * Get changed in many-to-many and many-to-one collections
-     *
-     * @param OnFlushEventArgs $args
-     */
-    public function onFlush(OnFlushEventArgs $args)
+    public function onFlush(OnFlushEventArgs $args): void
     {
         foreach ($args->getEntityManager()->getUnitOfWork()->getScheduledCollectionUpdates() as $collectionUpdate) {
             /** @var PersistentCollection $collectionUpdate */
@@ -177,38 +116,26 @@ final class Logger implements EventSubscriber
         }
     }
 
-    /**
-     * Flush logs. Can't flush inside post update
-     *
-     * @param PostFlushEventArgs $args
-     */
-    public function postFlush(PostFlushEventArgs $args)
+    public function postFlush(PostFlushEventArgs $args): void
     {
         if (!empty($this->logs)) {
             foreach ($this->logs as $log) {
-                $this->em->persist($log);
+                $this->entityManager->persist($log);
             }
 
             $this->logs = [];
-            $this->em->flush();
+            $this->entityManager->flush();
         }
     }
 
-    /**
-     * Log the action
-     *
-     * @param object $entity
-     * @param string $action
-     */
-    private function log($entity, $action)
+    private function log(object $entity, string $action)
     {
        try {
-            $this->reader->init($entity);
             if ($this->reader->isLoggable()) {
                 $changeSet = null;
 
                 if ($action === LogEntity::ACTION_UPDATE) {
-                    $uow = $this->em->getUnitOfWork();
+                    $uow = $this->entityManager->getUnitOfWork();
 
                     // get changes => should be already computed here (is a listener)
                     $changeSet = $uow->getEntityChangeSet($entity);

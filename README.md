@@ -8,7 +8,7 @@ This bundle is tested on symfony 4
 Prerequisities
 --------------
 
-This bundle use `stof/doctrine-extensions-bundle` to use blameable and timestampable. Install the bundle first and configure to use blamable and timestampable. Read the installation guide here https://symfony.com/doc/master/bundles/StofDoctrineExtensionsBundle/index.html
+This fork uses `knplabs/doctrine-behaviors` to use blameable and timestampable. Install the bundle first and configure to use blamable and timestampable. Read the installation guide here https://symfony.com/doc/master/bundles/StofDoctrineExtensionsBundle/index.html
 
 Installation
 ============
@@ -75,19 +75,19 @@ use Doctrine\ORM\Mapping as ORM;
 use Mb\DoctrineLogBundle\Annotation\Loggable;
 
 /**
- * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
- * @ORM\Table(name="user")
+ * #[ORM\Entity(repositoryClass: "App\Repository\UserRepository"]
+ * #[ORM\Table(name: "user")]
  *
- * @Loggable
+ * #[Loggable]
  */
 class User
 {
     /**
-     * @ORM\Id
-     * @ORM\Column(type="integer")
-     * @ORM\GeneratedValue(strategy="AUTO")
+     * #[ORM\Id]
+     * #[ORM\Column]
+     * #[ORM\GeneratedValue(strategy: "AUTO")]
      */
-    protected $id;
+    protected int $id;
 
 }
 ```
@@ -111,30 +111,30 @@ use Mb\DoctrineLogBundle\Annotation\Log;
 use Mb\DoctrineLogBundle\Annotation\Loggable;
 
 /**
- * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
- * @ORM\Table(name="user")
+ * #[ORM\Entity(repositoryClass: "App\Repository\UserRepository")]
+ * #[ORM\Table(name: "user")]
  *
- * @Loggable(strategy="exclude_all")
+ * #[Loggable(strategy: "exclude_all")]
  */
 class User
 {
     /**
-     * @ORM\Id
-     * @ORM\Column(type="integer")
-     * @ORM\GeneratedValue(strategy="AUTO")
+     * #[ORM\Id]
+     * #[ORM\Column(type: "integer")]
+     * #[ORM\GeneratedValue(strategy: "AUTO")]
      */
-    protected $id;
+    protected ?id $id;
 
     /**
-     * @ORM\Column(type="text", column="name")
-     * @Log
+     * #[ORM\Column(type: "text")]
+     * #[Log]
      */
-    protected $name;
+    protected ?string $name;
 
     /**
-     * @ORM\Column(type="text", column="user_name")
+     * @ORM\Column(column: "user_name")
      */
-    protected $username;
+    protected ?string $username;
 
 }
 ```
