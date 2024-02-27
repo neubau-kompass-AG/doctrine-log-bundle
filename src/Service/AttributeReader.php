@@ -5,12 +5,13 @@ namespace Mb\DoctrineLogBundle\Service;
 use Mb\DoctrineLogBundle\Attribute\Exclude;
 use Mb\DoctrineLogBundle\Attribute\Log;
 use Mb\DoctrineLogBundle\Attribute\Loggable;
+use Mb\DoctrineLogBundle\Exception\NotInitializedException;
 use ReflectionClass;
 
 class AttributeReader
 {
 
-    private Loggable $classAttribute;
+    private ?Loggable $classAttribute = ß;
 
     /**
      * @var object
@@ -41,15 +42,18 @@ class AttributeReader
      */
     public function isLoggable($property = null)
     {
+        if(null === $this->classAttribute) {
+            throw new NotInitializedException('AttributeReader not initialized');
+        }
         return !$property ? $this->classAttribute instanceof Loggable : $this->isPropertyLoggable($property);
     }
     
     public function getOnDeleteLogExpression(): ?string {
-        if($this->classAttribute instanceof Loggable) {
-            return $this->classAttribute->onDeleteLog;
+        if(null === $this->classAttribute) {
+            throw new NotInitializedException('AttributeReader not initialized');
         }
 
-        return null;
+        return $this->classAttribute->onDeleteLog;
     }
 
     /**
@@ -61,6 +65,10 @@ class AttributeReader
      */
     private function isPropertyLoggable($property)
     {
+        if(null === $this->classAttribute) {
+            throw new NotInitializedException('AttributeReader not initialized');
+        }
+
         $property = new \ReflectionProperty(
             str_replace('Proxies\__CG__\\', '', get_class($this->entity)),
             $property
