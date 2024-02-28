@@ -11,7 +11,7 @@ use ReflectionClass;
 class AttributeReader
 {
 
-    private ?Loggable $classAttribute = ß;
+    private ?Loggable $classAttribute = null;
 
     /**
      * @var object
