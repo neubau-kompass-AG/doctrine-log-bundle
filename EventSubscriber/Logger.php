@@ -9,11 +9,11 @@ use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Event\OnFlushEventArgs;
 use Doctrine\ORM\Event\PostFlushEventArgs;
 use Doctrine\ORM\Events;
-use Entity\Log as LogEntity;
+use Mb\DoctrineLogBundle\Entity\Log as LogEntity;
 use Psr\Http\Message\StreamInterface;
 use Psr\Log\LoggerInterface;
-use Service\AttributeReader;
-use Service\Logger as LoggerService;
+use Mb\DoctrineLogBundle\Service\AttributeReader;
+use Mb\DoctrineLogBundle\Service\Logger as LoggerService;
 use Symfony\Component\ExpressionLanguage\Expression;
 use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 

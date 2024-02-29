@@ -7,7 +7,6 @@ use Doctrine\ORM\Mapping as ORM;
 use Knp\DoctrineBehaviors\Contract\Entity\BlameableInterface;
 use Knp\DoctrineBehaviors\Model\Blameable\BlameableTrait;
 
-
 #[ORM\Entity]
 #[ORM\Table(name: "mb_entity_log")]
 class Log
