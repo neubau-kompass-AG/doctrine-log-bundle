@@ -29,7 +29,7 @@ class AttributeReader
         $this->entity = $entity;
         $class = new ReflectionClass(str_replace('Proxies\__CG__\\', '', get_class($entity)));
         $attribute = $class->getAttributes(Loggable::class)[0] ?? null;
-        if($instance = $attribute->newInstance()) {
+        if(null !== $attribute && $instance = $attribute->newInstance()) {
             $this->classAttribute = $instance;
         }
     }
