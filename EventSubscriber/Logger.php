@@ -4,20 +4,18 @@ namespace Mb\DoctrineLogBundle\EventSubscriber;
 
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\Common\EventSubscriber;
-use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\Event\PostFlushEventArgs;
+use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Event\OnFlushEventArgs;
+use Doctrine\ORM\Event\PostFlushEventArgs;
 use Doctrine\ORM\Events;
-use Mb\DoctrineLogBundle\Service\AttributeReader;
-use Mb\DoctrineLogBundle\Service\Logger as LoggerService;
-use Mb\DoctrineLogBundle\Entity\Log as LogEntity;
-use Mb\DoctrineLogBundle\Attribute\Loggable;
+use Entity\Log as LogEntity;
 use Psr\Http\Message\StreamInterface;
 use Psr\Log\LoggerInterface;
+use Service\AttributeReader;
+use Service\Logger as LoggerService;
 use Symfony\Component\ExpressionLanguage\Expression;
 use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
-use Throwable;
 
 /**
  * Class Logger
@@ -72,15 +70,14 @@ final class Logger implements EventSubscriber
         foreach ($args->getEntityManager()->getUnitOfWork()->getScheduledCollectionUpdates() as $collectionUpdate) {
             /** @var PersistentCollection $collectionUpdate */
             $owner = $collectionUpdate->getOwner();
-            $this->reader->init($owner);
 
             $mapping = $collectionUpdate->getMapping();
-            if (!$this->reader->isLoggable() || !$this->reader->isLoggable($mapping['fieldName'])) {
+            if (!$this->reader::isLoggable($owner) || !$this->reader::isLoggable($owner, $mapping['fieldName'])) {
                 return;
             }
 
 
-            $expression = $this->reader->getPropertyExpression($mapping['fieldName']);
+            $expression = $this->reader::getPropertyExpression($owner, $mapping['fieldName']);
 
             $insertions = [];
             foreach ($collectionUpdate->getInsertDiff() as $relatedObject) {
@@ -131,7 +128,7 @@ final class Logger implements EventSubscriber
     private function log(object $entity, string $action)
     {
        try {
-            if ($this->reader->isLoggable()) {
+            if ($this->reader::isLoggable($entity)) {
                 $changeSet = null;
 
                 if ($action === LogEntity::ACTION_UPDATE) {
@@ -147,12 +144,12 @@ final class Logger implements EventSubscriber
 
                     // just getting the changed objects ids
                     foreach ($changeSet as $key => &$values) {
-                        if (in_array($key, $this->ignoreProperties) || !$this->reader->isLoggable($key)) {
+                        if (in_array($key, $this->ignoreProperties) || !$this->reader::isLoggable($owner, $key)) {
                             // ignore configured properties
                             unset($changeSet[$key]);
                         }
 
-                        $expression = $this->reader->getPropertyExpression($key);
+                        $expression = $this->reader::getPropertyExpression($owner, $key);
 
                         if ($expression != null) {
                             if (is_object($values[0])) {
@@ -185,7 +182,7 @@ final class Logger implements EventSubscriber
                 }
 
                 if($action === LogEntity::ACTION_REMOVE) {
-                    $expression = $this->reader->getOnDeleteLogExpression();
+                    $expression = $this->reader::getOnDeleteLogExpression($owner);
 
                     if(!empty($expression)) {
                         $changeSet['_remove'] = $this->expressionLanguage->evaluate($expression, ['obj' => $entity]);

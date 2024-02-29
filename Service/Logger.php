@@ -3,7 +3,6 @@
 namespace Mb\DoctrineLogBundle\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
-
 use Mb\DoctrineLogBundle\Entity\Log as LogEntity;
 use Symfony\Bundle\SecurityBundle\Security;
 

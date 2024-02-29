@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace Mb\DoctrineLogBundle\DependencyInjection;
 
-use Doctrine\Common\EventSubscriber;
-use Mb\DoctrineLogBundle\EventSubscriber\Logger;
+use EventSubscriber\Logger;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;

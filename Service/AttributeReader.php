@@ -5,18 +5,10 @@ namespace Mb\DoctrineLogBundle\Service;
 use Mb\DoctrineLogBundle\Attribute\Exclude;
 use Mb\DoctrineLogBundle\Attribute\Log;
 use Mb\DoctrineLogBundle\Attribute\Loggable;
-use Mb\DoctrineLogBundle\Exception\NotInitializedException;
 use ReflectionClass;
 
 class AttributeReader
 {
-
-    private ?Loggable $classAttribute = null;
-
-    /**
-     * @var object
-     */
-    private $entity;
 
     /**
      * Init the entity
@@ -24,14 +16,15 @@ class AttributeReader
      * @param object $entity
      * @throws \ReflectionException
      */
-    public function init($entity): void
+    private static function getClassAttributeInstance(object $entity): ?Loggable
     {
-        $this->entity = $entity;
         $class = new ReflectionClass(str_replace('Proxies\__CG__\\', '', get_class($entity)));
         $attribute = $class->getAttributes(Loggable::class)[0] ?? null;
         if(null !== $attribute && $instance = $attribute->newInstance()) {
-            $this->classAttribute = $instance;
+            return $instance;
         }
+
+        return null;
     }
 
     /**
@@ -40,62 +33,61 @@ class AttributeReader
      * @param null|string $property
      * @return bool
      */
-    public function isLoggable($property = null)
+    public static function isLoggable(object $object, string $property = null): bool
     {
-        if(null === $this->classAttribute) {
-            throw new NotInitializedException('AttributeReader not initialized');
+        $classAttribute = self::getClassAttributeInstance($object);
+
+        if(null === $classAttribute) {
+            return false;
         }
-        return !$property ? $this->classAttribute instanceof Loggable : $this->isPropertyLoggable($property);
+        return !$property ? $classAttribute instanceof Loggable : self::isPropertyLoggable($classAttribute, $object, $property);
     }
     
-    public function getOnDeleteLogExpression(): ?string {
-        if(null === $this->classAttribute) {
-            throw new NotInitializedException('AttributeReader not initialized');
+    public static function getOnDeleteLogExpression(object $object): ?string {
+        $classAttribute = self::getClassAttributeInstance($object);
+
+        if($classAttribute instanceof Loggable) {
+            return $classAttribute->onDeleteLog;
         }
 
-        return $this->classAttribute->onDeleteLog;
+        return null;
     }
 
     /**
      * Check if propert is loggable
      *
-     * @param $property
+     * @param object $entity
+     * @param string $property
      * @return bool
      * @throws \ReflectionException
      */
-    private function isPropertyLoggable($property)
+    private static function isPropertyLoggable(Loggable $classAttribute, object $entity, string $property): bool
     {
-        if(null === $this->classAttribute) {
-            throw new NotInitializedException('AttributeReader not initialized');
-        }
-
         $property = new \ReflectionProperty(
-            str_replace('Proxies\__CG__\\', '', get_class($this->entity)),
+            str_replace('Proxies\__CG__\\', '', get_class($entity)),
             $property
         );
 
-        if ($this->classAttribute->strategy === Loggable::STRATEGY_EXCLUDE_ALL) {
+        if ($classAttribute->strategy === Loggable::STRATEGY_EXCLUDE_ALL) {
             // check for log annotation
             $attribute = $property->getAttributes( Log::class)[0] ?? null;
 
-            return $attribute instanceof Log;
+            return $attribute !== null;
         }
 
         // include all strategy, check for exclude
         $attribute = $property->getAttributes(Exclude::class)[0] ?? null;
 
-        return !$attribute instanceof Exclude;
+        return $attribute === null;
     }
 
     /**
-     * @param $property
-     * @return ?string
      * @throws \ReflectionException
      */
-    public function getPropertyExpression($property)
+    public static function getPropertyExpression(object $entity, string $property): ?string
     {
         $property = new \ReflectionProperty(
-            str_replace('Proxies\__CG__\\', '', get_class($this->entity)),
+            str_replace('Proxies\__CG__\\', '', get_class($entity)),
             $property
         );
 
