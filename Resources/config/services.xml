@@ -7,6 +7,6 @@
     <services>
         <defaults autowire="true" autoconfigure="true"/>
 
-        <prototype namespace="Mb\DoctrineLogBundle\" resource="../../../src/*" exclude="../src/{DependencyInjection,Entity,MbDoctrineLogBundle}"/>
+        <prototype namespace="Mb\DoctrineLogBundle\" resource="../../*" exclude="../src/{DependencyInjection,Entity,MbDoctrineLogBundle}"/>
     </services>
 </container>
