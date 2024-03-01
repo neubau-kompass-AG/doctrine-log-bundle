@@ -93,7 +93,7 @@ class AttributeReader
 
         $attribute = $property->getAttributes(Log::class)[0] ?? null;
 
-        if ($instance = $attribute->newInstance()) {
+        if (null !== $attribute && $instance = $attribute->newInstance()) {
             return $instance->expression;
         }
 

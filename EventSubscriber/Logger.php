@@ -144,12 +144,12 @@ final class Logger implements EventSubscriber
 
                     // just getting the changed objects ids
                     foreach ($changeSet as $key => &$values) {
-                        if (in_array($key, $this->ignoreProperties) || !$this->reader::isLoggable($owner, $key)) {
+                        if (in_array($key, $this->ignoreProperties) || !$this->reader::isLoggable($entity, $key)) {
                             // ignore configured properties
                             unset($changeSet[$key]);
                         }
 
-                        $expression = $this->reader::getPropertyExpression($owner, $key);
+                        $expression = $this->reader::getPropertyExpression($entity, $key);
 
                         if ($expression != null) {
                             if (is_object($values[0])) {
@@ -182,7 +182,7 @@ final class Logger implements EventSubscriber
                 }
 
                 if($action === LogEntity::ACTION_REMOVE) {
-                    $expression = $this->reader::getOnDeleteLogExpression($owner);
+                    $expression = $this->reader::getOnDeleteLogExpression($entity);
 
                     if(!empty($expression)) {
                         $changeSet['_remove'] = $this->expressionLanguage->evaluate($expression, ['obj' => $entity]);
