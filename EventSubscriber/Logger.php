@@ -9,6 +9,7 @@ use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Event\OnFlushEventArgs;
 use Doctrine\ORM\Event\PostFlushEventArgs;
 use Doctrine\ORM\Events;
+use Doctrine\ORM\PersistentCollection;
 use Mb\DoctrineLogBundle\Entity\Log as LogEntity;
 use Psr\Http\Message\StreamInterface;
 use Psr\Log\LoggerInterface;
@@ -68,7 +69,6 @@ final class Logger implements EventSubscriber
     public function onFlush(OnFlushEventArgs $args): void
     {
         foreach ($args->getEntityManager()->getUnitOfWork()->getScheduledCollectionUpdates() as $collectionUpdate) {
-            /** @var PersistentCollection $collectionUpdate */
             $owner = $collectionUpdate->getOwner();
 
             $mapping = $collectionUpdate->getMapping();
@@ -103,8 +103,8 @@ final class Logger implements EventSubscriber
                     $changes['newSet'][] = $this->expressionLanguage->evaluate($expression, ['obj' => $item]);
                 }
 
-                if (isset($this->logs[spl_object_hash($item)])) {
-                    $changes = array_merge($this->logs[spl_object_hash($item)]->getChanges(), [$mapping['fieldName'] => $changes]);
+                if (isset($this->logs[spl_object_hash($owner)])) {
+                    $changes = array_merge($this->logs[spl_object_hash($owner)]->getChanges(), [$mapping['fieldName'] => $changes]);
                 } else {
                     $changes = [$mapping['fieldName'] => $changes];
                 }
@@ -127,7 +127,7 @@ final class Logger implements EventSubscriber
 
     private function log(object $entity, string $action)
     {
-       try {
+        try {
             if ($this->reader::isLoggable($entity)) {
                 $changeSet = null;
 
