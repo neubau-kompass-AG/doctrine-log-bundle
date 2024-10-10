@@ -68,7 +68,7 @@ final class Logger implements EventSubscriber
 
     public function onFlush(OnFlushEventArgs $args): void
     {
-        foreach ($args->getEntityManager()->getUnitOfWork()->getScheduledCollectionUpdates() as $collectionUpdate) {
+        foreach ($args->getObjectManager()->getUnitOfWork()->getScheduledCollectionUpdates() as $collectionUpdate) {
             $owner = $collectionUpdate->getOwner();
 
             $mapping = $collectionUpdate->getMapping();
