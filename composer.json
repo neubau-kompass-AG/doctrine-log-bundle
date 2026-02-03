@@ -6,14 +6,14 @@
         "php": "^8.5",
         "doctrine/doctrine-bundle": "*",
         "symfony/monolog-bundle": "^3.5 || ^4.0",
-        "symfony/expression-language": "7.4.*"
+        "symfony/expression-language": "^7.4 || ^8.0"
     },
     "require-dev": {
         "phpunit/phpunit": "^12.1",
-        "rector/rector": "2.0",
+        "rector/rector": "^2.0",
         "phpstan/phpstan": "^2.1",
-        "doctrine/orm": "3.0",
-        "symfony/security-bundle": "7.4.*",
+        "doctrine/orm": "^3.0",
+        "symfony/security-bundle": "^7.4 || ^8.0",
         "psr/http-message": "^2.0"
     },
     "license": "MIT",
