@@ -14,7 +14,7 @@ class MbDoctrineLogExtension extends Extension
 {
 
     /** @inheritDoc */
-    public function load(array $configs, ContainerBuilder $containerBuilder)
+    public function load(array $configs, ContainerBuilder $containerBuilder): void
     {
         $loader = new XmlFileLoader($containerBuilder, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.xml');
